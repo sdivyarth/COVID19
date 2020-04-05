@@ -58,7 +58,6 @@ values=values.astype('float32')
 # data["World"]=data.sum(axis=1)
 
 # train and test have the pred at -1
-
 def scale(train, test):
 	scaler = MinMaxScaler(feature_range=(-1, 1))
 	scaler = scaler.fit(train)
@@ -81,7 +80,7 @@ def invert_scale(scaler, X, yhat):
 # data_scaled = scaled.to_numpy()
 dataset = values[:,[131,-1]]
 
-n=int(len(dataset)*0.67)
+n=int(len(dataset)*0.80)
 train,test=dataset[:n,:],dataset[n:,:]
 scaler,train_scaled,test_scaled=scale(train,test)
 trainX = train_scaled[:,0:-1]
@@ -92,7 +91,6 @@ testY = test_scaled[:,-1]
 trainX = np.reshape(trainX, (trainX.shape[0], 1, 1))
 testX = np.reshape(testX, (testX.shape[0], 1, 1))
 # get the X_test from test and use this yhat to transform using the scaler obtained above and invert_scale function
-
 look_back = 1
 import tensorflow as tf
 
@@ -110,29 +108,44 @@ model = get_model()
 
 
 model.compile(loss='mean_squared_error', optimizer='adam')
-model.fit(trainX, trainY, epochs=100, batch_size=1, verbose=2)
-
+history=model.fit(trainX, trainY, epochs=500, batch_size=1, verbose=2,validation_split=0.20)
 X=np.concatenate((trainX,testX),axis=0)
 yhat=model.predict(X)
 data_pred=np.concatenate(((X.reshape(dataset[:,0:-1].shape)),yhat),axis=1)
 yf=scaler.inverse_transform(data_pred)[:,-1]
-# pred= scaler.inverse_transform(np.concatenate((dataset[:,:-1],yhat),axis=1))
-
-# Plotting cases for a country
-y=dataset[:,-1]
-# x=y.index.values.tolist() 
 
 fig, ax = plt.subplots()
-ax.plot(y)
-ax.plot(yf)
+plt.plot(history.history['loss'],label="loss")
+plt.plot(history.history['val_loss'],label="validation loss")
+plt.legend()
+plt.show()
 
-ax.set(xlabel='Date', ylabel='Numbers Infected',title='Infected in India')
+# plt.plot(history.history.loss)
+# plt.plot(history.history.val_loss)
+# fig.show()
+# ax.set(xlabel='Iteration', ylabel='Loss',title='Training')
+# plt.legend()
 
 # ax.xaxis.set_ticks(np.asarray(range(0,len(y),7)))
 # ax.set_xticklabels(x, rotation=45)
 
 # ax.grid()
+
+# Plotting cases for a country
+
+# x=y.index.values.tolist() 
+y=dataset[:,-1]
+fig, ax = plt.subplots()
+plt.plot(y,label="actual")
+plt.plot(yf,label="predicted")
+plt.legend()
 fig.show()
+# ax.set(xlabel='Date', ylabel='Numbers Infected',title='Infected in India')
+
+# ax.xaxis.set_ticks(np.asarray(range(0,len(y),7)))
+# ax.set_xticklabels(x, rotation=45)
+
+# ax.grid()
 
 trainPredict = model.predict(trainX)
 testPredict = model.predict(testX)
@@ -291,6 +304,18 @@ trainScore = math.sqrt(mean_squared_error(trainY[0], trainPredict[:,0]))
 print('Train Score: %.2f RMSE' % (trainScore))
 testScore = math.sqrt(mean_squared_error(testY[0], testPredict[:,0]))
 print('Test Score: %.2f RMSE' % (testScore))
+
 trainY.shape
+
+
+
+
+
 data
+
 scaled.head(4)
+
+
+
+
+
