@@ -1,5 +1,3 @@
-# from google.colab import drive
-# drive.mount('/content/drive')
 
 import pandas as pd
 import numpy as np
@@ -14,7 +12,7 @@ from sklearn.metrics import mean_squared_error
 
 # Keep same random seed to get reproducible results || When ran on GPU results not reproducible
 np.random.seed(7)
-data = pd.read_csv('/content/drive/My Drive/COVID19/COVID19.csv')
+data = pd.read_csv('/content/drive/My Drive/COVID19/COVID19_5apr.csv')
 
 data['Country'] = data['Country/Region']
 ser=pd.Series(data=data[data['Province/State'].notnull()]['Country'].values+" "+data[data['Province/State'].notnull()]['Province/State'].values,index=data[data['Province/State'].notnull()]['Country'].index)
@@ -61,7 +59,7 @@ dataset=dataset[dataset[:,0]>0]
 plt.plot(dataset[:,0])
 plt.show()
 
-n=int(len(dataset)*0.90)
+n=int(len(dataset)*0.80)
 train,test=dataset[:n,:],dataset[n:,:]
 scaler,train_scaled,test_scaled=scale(train,test)
 trainX = train_scaled[:,0:-1]
@@ -76,15 +74,24 @@ testX = np.reshape(testX, (testX.shape[0], 1, 1))
 look_back = 1
 
 import tensorflow as tf
-from tensorflow.keras.layers import Input, Dense, LSTM
+from tensorflow.keras.layers import Input, Dense, LSTM,Dropout
 from tensorflow.keras.models import Sequential
 def get_model():
   model = Sequential()
   #model.add(LSTM(4, input_shape=(1, 256)))
   model.add(LSTM(350, input_shape=(1, 1)))
+  model.add(Dense(128))
+  model.add(Dropout(0.5))
+  model.add(Dense(64))
+  model.add(Dropout(0.5))
+  model.add(Dense(32))
+  model.add(Dropout(0.5))
+  model.add(Dense(16))
+  model.add(Dropout(0.5))
   model.add(Dense(1))
   # model.add(Dense(1,activation='exponential'))
   return model
+
 model = get_model()
 model.compile(loss='mean_squared_error', optimizer='adam')
 history=model.fit(trainX, trainY, epochs=200, batch_size=1, verbose=2,validation_split=0.20,metrics=['val_loss'])
